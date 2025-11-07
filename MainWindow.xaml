@@ -1,0 +1,12 @@
+﻿<Window x:Class="GdzApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ГДЗ — Каталог" Height="700" Width="1000">
+    <DockPanel>
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Background="#F0F8FF">
+            <Button x:Name="BackButton" Content="← Назад" Click="BackButton_Click" />
+            <Button x:Name="LogoutButton" Content="Выход" HorizontalAlignment="Right" Click="LogoutButton_Click"/>
+        </StackPanel>
+        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+    </DockPanel>
+</Window>
