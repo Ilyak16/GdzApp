@@ -3,34 +3,53 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:conv="clr-namespace:GdzApp.Converters"
       Title="Задания учебника">
+
     <Page.Resources>
         <conv:ImageUrlConverter x:Key="ImageUrlConverter"/>
+        <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Page.Resources>
 
     <DockPanel Margin="10">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
-            <Button Content="← Назад" Click="BackButton_Click"/>
-            <TextBlock x:Name="TitleText" FontSize="16" FontWeight="Bold" Margin="10,0,0,0" 
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+			<Button Content="← Назад" Click="BackButton_Click"/>
+			<TextBlock x:Name="TitleText" FontSize="16" FontWeight="Bold" Margin="10,0,0,0"
                        VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}"/>
-        </StackPanel>
+		</StackPanel>
 
-        <ScrollViewer>
+		<ScrollViewer>
             <ItemsControl x:Name="TasksList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderThickness="1" BorderBrush="#DDD" Padding="10" Margin="0,5" 
-                                CornerRadius="4" Background="White">
+                        <Border BorderThickness="1" BorderBrush="#DDD" Padding="15" Margin="0,5" 
+                    CornerRadius="4" Background="White">
                             <StackPanel>
-                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Bold" 
-                                           Margin="0,0,0,5"/>
-                                <Image Source="{Binding SolutionImageUrl, Converter={StaticResource ImageUrlConverter}}" 
-                                       MaxWidth="600" MaxHeight="800" HorizontalAlignment="Left"
-                                       Stretch="Uniform"/>
+                                <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" 
+                               Margin="0,0,0,10" Foreground="{StaticResource PrimaryBrush}"/>
+
+                                <!-- Текстовое решение -->
+                                <Border Visibility="{Binding SolutionText, Converter={StaticResource StringToVisibilityConverter}}"
+                            Background="#F9F9F9" Padding="10" Margin="0,0,0,10"
+                            CornerRadius="4" BorderThickness="1" BorderBrush="#EEE">
+                                    <TextBlock Text="{Binding SolutionText}" TextWrapping="Wrap" 
+                                   FontSize="12" FontFamily="Consolas"/>
+                                </Border>
+
+                                <!-- Изображение решения -->
+                                <Border Visibility="{Binding SolutionImageUrl, Converter={StaticResource StringToVisibilityConverter}}"
+                            Margin="0,0,0,10">
+                                    <Image Source="{Binding SolutionImageUrl, Converter={StaticResource ImageUrlConverter}}" 
+                               MaxWidth="600" MaxHeight="800" HorizontalAlignment="Left"
+                               Stretch="Uniform"/>
+                                </Border>
+
+                                <!-- Сообщение если решений нет (упрощенная версия) -->
+                                <TextBlock Text="Решение отсутствует" FontStyle="Italic" Foreground="Gray"
+                               Visibility="{Binding HasNoSolution, Converter={StaticResource StringToVisibilityConverter}}"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-    </DockPanel>
+	</DockPanel>
 </Page>

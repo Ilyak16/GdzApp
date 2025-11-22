@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using GdzApp.Models;
 
 namespace GdzApp.Windows
@@ -19,19 +20,31 @@ namespace GdzApp.Windows
             TheTask = existing;
             TitleBox.Text = existing.Title;
             ImageBox.Text = existing.SolutionImageUrl;
+            TextSolutionBox.Text = existing.SolutionText;
             this.Title = "Редактировать задание";
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            // Сохраняем ВСЕ поля
             TheTask.Title = TitleBox.Text.Trim();
             TheTask.SolutionImageUrl = ImageBox.Text.Trim();
+            TheTask.SolutionText = TextSolutionBox.Text.Trim();
+
+            // Отладочный вывод
+            System.Diagnostics.Debug.WriteLine($"=== СОХРАНЕНИЕ ЗАДАНИЯ ===");
+            System.Diagnostics.Debug.WriteLine($"Заголовок: '{TheTask.Title}'");
+            System.Diagnostics.Debug.WriteLine($"Изображение: '{TheTask.SolutionImageUrl}'");
+            System.Diagnostics.Debug.WriteLine($"Текст решения: '{TheTask.SolutionText}'");
+            System.Diagnostics.Debug.WriteLine($"Длина текста: {TheTask.SolutionText.Length}");
+            System.Diagnostics.Debug.WriteLine($"=========================");
 
             if (string.IsNullOrEmpty(TheTask.Title))
             {
                 MessageBox.Show("Укажите заголовок задания.");
                 return;
             }
+
             this.DialogResult = true;
             this.Close();
         }

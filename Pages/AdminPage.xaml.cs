@@ -79,8 +79,12 @@ namespace GdzApp.Pages
                 var wnd = new AddEditTaskWindow(tb.Id);
                 if (wnd.ShowDialog() == true)
                 {
-                    Database.InsertTask(wnd.TheTask);
+                    System.Diagnostics.Debug.WriteLine("=== ДОБАВЛЕНИЕ ЗАДАНИЯ ===");
+                    var taskId = Database.InsertTask(wnd.TheTask);
                     TasksGrid.ItemsSource = Database.GetTasksByTextbook(tb.Id);
+
+                    // Проверяем что сохранилось в базе
+                    Database.CheckTaskData(taskId);
                 }
             }
             else MessageBox.Show("Выберите учебник чтобы добавить задание.");
@@ -93,9 +97,13 @@ namespace GdzApp.Pages
                 var wnd = new AddEditTaskWindow(t);
                 if (wnd.ShowDialog() == true)
                 {
+                    System.Diagnostics.Debug.WriteLine("=== РЕДАКТИРОВАНИЕ ЗАДАНИЯ ===");
                     Database.UpdateTask(wnd.TheTask);
                     if (TextbooksGrid.SelectedItem is Textbook tb)
                         TasksGrid.ItemsSource = Database.GetTasksByTextbook(tb.Id);
+
+                    // Проверяем что сохранилось в базе
+                    Database.CheckTaskData(t.Id);
                 }
             }
             else MessageBox.Show("Выберите задание.");

@@ -11,6 +11,25 @@ namespace GdzApp.Data
         private static string DbFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gdz.db");
         private static string ConnString => $"Data Source={DbFile}";
 
+        public static void CheckTaskData(int taskId)
+        {
+            using var conn = new SqliteConnection(ConnString);
+            conn.Open();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT Title, SolutionImageUrl, SolutionText FROM Tasks WHERE Id = $id;";
+            cmd.Parameters.AddWithValue("$id", taskId);
+
+            using var rdr = cmd.ExecuteReader();
+            if (rdr.Read())
+            {
+                System.Diagnostics.Debug.WriteLine("=== ДАННЫЕ ИЗ БАЗЫ ===");
+                System.Diagnostics.Debug.WriteLine($"Title: '{rdr.GetString(0)}'");
+                System.Diagnostics.Debug.WriteLine($"Image: '{rdr.GetString(1)}'");
+                System.Diagnostics.Debug.WriteLine($"Text: '{rdr.GetString(2)}'");
+                System.Diagnostics.Debug.WriteLine($"Text Length: {rdr.GetString(2)?.Length ?? 0}");
+            }
+        }
+
         public static void Initialize()
         {
             bool create = !File.Exists(DbFile);
@@ -51,63 +70,12 @@ namespace GdzApp.Data
     ";
             cmd.ExecuteNonQuery();
 
-            // Миграция для изменения типа поля Class с INTEGER на TEXT
+            // МИГРАЦИЯ: Добавляем поле SolutionText если его нет
             try
             {
                 var checkCmd = conn.CreateCommand();
-                checkCmd.CommandText = "PRAGMA table_info(Textbooks);";
+                checkCmd.CommandText = "PRAGMA table_info(Tasks);";
                 using var reader = checkCmd.ExecuteReader();
-                bool needsAlter = false;
-
-                while (reader.Read())
-                {
-                    if (reader.GetString(1) == "Class" && reader.GetString(2) == "INTEGER")
-                    {
-                        needsAlter = true;
-                        break;
-                    }
-                }
-                reader.Close();
-
-                if (needsAlter)
-                {
-                    var alterCmd = conn.CreateCommand();
-                    alterCmd.CommandText = @"
-                CREATE TABLE Textbooks_temp (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Subject TEXT,
-                    Description TEXT,
-                    Manufacturer TEXT,
-                    Country TEXT,
-                    Authors TEXT,
-                    Year INTEGER,
-                    Class TEXT,
-                    ImageUrl TEXT
-                );
-                
-                INSERT INTO Textbooks_temp (Id, Subject, Description, Manufacturer, Country, Authors, Year, Class, ImageUrl)
-                SELECT Id, Subject, Description, Manufacturer, Country, Authors, Year, CAST(Class AS TEXT), ImageUrl 
-                FROM Textbooks;
-                
-                DROP TABLE Textbooks;
-                
-                ALTER TABLE Textbooks_temp RENAME TO Textbooks;
-            ";
-                    alterCmd.ExecuteNonQuery();
-                    Console.WriteLine("Таблица Textbooks успешно обновлена (Class -> TEXT)");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при обновлении таблицы Textbooks: {ex.Message}");
-            }
-
-            // Миграция для добавления поля SolutionText в таблицу Tasks
-            try
-            {
-                var checkSolutionCmd = conn.CreateCommand();
-                checkSolutionCmd.CommandText = "PRAGMA table_info(Tasks);";
-                using var reader = checkSolutionCmd.ExecuteReader();
                 bool hasSolutionText = false;
 
                 while (reader.Read())
@@ -281,18 +249,57 @@ namespace GdzApp.Data
             using var conn = new SqliteConnection(ConnString);
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT Id, TextbookId, Title, SolutionImageUrl FROM Tasks WHERE TextbookId = $tid;";
+
+            // Сначала проверяем структуру таблицы
+            var checkCmd = conn.CreateCommand();
+            checkCmd.CommandText = "PRAGMA table_info(Tasks);";
+            var hasSolutionText = false;
+            using (var reader = checkCmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == "SolutionText")
+                    {
+                        hasSolutionText = true;
+                        break;
+                    }
+                }
+            }
+
+            // Формируем запрос в зависимости от структуры таблицы
+            if (hasSolutionText)
+            {
+                cmd.CommandText = "SELECT Id, TextbookId, Title, SolutionImageUrl, SolutionText FROM Tasks WHERE TextbookId = $tid;";
+            }
+            else
+            {
+                cmd.CommandText = "SELECT Id, TextbookId, Title, SolutionImageUrl FROM Tasks WHERE TextbookId = $tid;";
+            }
+
             cmd.Parameters.AddWithValue("$tid", textbookId);
+
             using var rdr = cmd.ExecuteReader();
             while (rdr.Read())
             {
-                list.Add(new TaskItem
+                var task = new TaskItem
                 {
                     Id = rdr.GetInt32(0),
                     TextbookId = rdr.GetInt32(1),
                     Title = rdr.GetString(2),
                     SolutionImageUrl = rdr.IsDBNull(3) ? "" : rdr.GetString(3)
-                });
+                };
+
+                // Читаем SolutionText только если поле существует
+                if (hasSolutionText)
+                {
+                    task.SolutionText = rdr.IsDBNull(4) ? "" : rdr.GetString(4);
+                }
+                else
+                {
+                    task.SolutionText = "";
+                }
+
+                list.Add(task);
             }
             return list;
         }
@@ -303,11 +310,16 @@ namespace GdzApp.Data
             conn.Open();
             var cmd = conn.CreateCommand();
             cmd.CommandText =
-                @"INSERT INTO Tasks (TextbookId, Title, SolutionImageUrl) VALUES ($tid,$title,$img);
-                  SELECT last_insert_rowid();";
+                @"INSERT INTO Tasks (TextbookId, Title, SolutionImageUrl, SolutionText) 
+          VALUES ($tid, $title, $img, $text);
+          SELECT last_insert_rowid();";
             cmd.Parameters.AddWithValue("$tid", t.TextbookId);
             cmd.Parameters.AddWithValue("$title", t.Title);
             cmd.Parameters.AddWithValue("$img", t.SolutionImageUrl);
+            cmd.Parameters.AddWithValue("$text", t.SolutionText ?? ""); // Добавляем защиту от null
+
+            System.Diagnostics.Debug.WriteLine($"INSERT: Text='{t.SolutionText}', Length={t.SolutionText?.Length ?? 0}");
+
             var id = (long)cmd.ExecuteScalar();
             return (int)id;
         }
@@ -317,10 +329,18 @@ namespace GdzApp.Data
             using var conn = new SqliteConnection(ConnString);
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = "UPDATE Tasks SET Title=$title, SolutionImageUrl=$img WHERE Id=$id;";
+            cmd.CommandText = @"UPDATE Tasks 
+                       SET Title = $title, 
+                           SolutionImageUrl = $img, 
+                           SolutionText = $text 
+                       WHERE Id = $id;";
             cmd.Parameters.AddWithValue("$title", t.Title);
             cmd.Parameters.AddWithValue("$img", t.SolutionImageUrl);
+            cmd.Parameters.AddWithValue("$text", t.SolutionText ?? "");
             cmd.Parameters.AddWithValue("$id", t.Id);
+
+            System.Diagnostics.Debug.WriteLine($"UPDATE: Text='{t.SolutionText}', Length={t.SolutionText?.Length ?? 0}");
+
             cmd.ExecuteNonQuery();
         }
 

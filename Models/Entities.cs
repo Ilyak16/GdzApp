@@ -30,5 +30,6 @@
         public int TextbookId { get; set; }
         public string Title { get; set; } = "";
         public string SolutionImageUrl { get; set; } = "";
+        public string SolutionText { get; set; } = "";
     }
 }
