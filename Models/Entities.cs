@@ -20,7 +20,7 @@
         public string Country { get; set; } = "";
         public string Authors { get; set; } = "";
         public int Year { get; set; }
-        public int Class { get; set; }
+        public string Class { get; set; } = "";
         public string ImageUrl { get; set; } = "";
     }
 

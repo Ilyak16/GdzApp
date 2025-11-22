@@ -36,6 +36,7 @@
                                     <TextBlock Text="{Binding Country}"/>
                                     <TextBlock Text="{Binding Year}"/>
                                     <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,6,0,0" MaxHeight="80"/>
+                                    <Button Content="Просмотреть задания" Click="ViewTasks_Click" Tag="{Binding}" Margin ="0, 15, 0, 0" Padding="8, 2" Background="{StaticResource PrimaryBrush}" Foreground="White"/>
                                 </StackPanel>
                             </Grid>
                         </Border>

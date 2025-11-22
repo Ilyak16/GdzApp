@@ -20,16 +20,60 @@ namespace GdzApp.Data
             var cmd = conn.CreateCommand();
 
             cmd.CommandText = @"
-                CREATE TABLE IF NOT EXISTS Users (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Username TEXT UNIQUE,
-                    Password TEXT,
-                    Email TEXT,
-                    EmailNotifications INTEGER,
-                    IsAdmin INTEGER,
-                    Class INTEGER
-                );
-                CREATE TABLE IF NOT EXISTS Textbooks (
+        CREATE TABLE IF NOT EXISTS Users (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Username TEXT UNIQUE,
+            Password TEXT,
+            Email TEXT,
+            EmailNotifications INTEGER,
+            IsAdmin INTEGER,
+            Class INTEGER
+        );
+        CREATE TABLE IF NOT EXISTS Textbooks (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Subject TEXT,
+            Description TEXT,
+            Manufacturer TEXT,
+            Country TEXT,
+            Authors TEXT,
+            Year INTEGER,
+            Class TEXT,
+            ImageUrl TEXT
+        );
+        CREATE TABLE IF NOT EXISTS Tasks (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            TextbookId INTEGER,
+            Title TEXT,
+            SolutionImageUrl TEXT,
+            SolutionText TEXT,
+            FOREIGN KEY(TextbookId) REFERENCES Textbooks(Id) ON DELETE CASCADE
+        );
+    ";
+            cmd.ExecuteNonQuery();
+
+            // Миграция для изменения типа поля Class с INTEGER на TEXT
+            try
+            {
+                var checkCmd = conn.CreateCommand();
+                checkCmd.CommandText = "PRAGMA table_info(Textbooks);";
+                using var reader = checkCmd.ExecuteReader();
+                bool needsAlter = false;
+
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == "Class" && reader.GetString(2) == "INTEGER")
+                    {
+                        needsAlter = true;
+                        break;
+                    }
+                }
+                reader.Close();
+
+                if (needsAlter)
+                {
+                    var alterCmd = conn.CreateCommand();
+                    alterCmd.CommandText = @"
+                CREATE TABLE Textbooks_temp (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Subject TEXT,
                     Description TEXT,
@@ -37,18 +81,57 @@ namespace GdzApp.Data
                     Country TEXT,
                     Authors TEXT,
                     Year INTEGER,
-                    Class INTEGER,
+                    Class TEXT,
                     ImageUrl TEXT
                 );
-                CREATE TABLE IF NOT EXISTS Tasks (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    TextbookId INTEGER,
-                    Title TEXT,
-                    SolutionImageUrl TEXT,
-                    FOREIGN KEY(TextbookId) REFERENCES Textbooks(Id) ON DELETE CASCADE
-                );
+                
+                INSERT INTO Textbooks_temp (Id, Subject, Description, Manufacturer, Country, Authors, Year, Class, ImageUrl)
+                SELECT Id, Subject, Description, Manufacturer, Country, Authors, Year, CAST(Class AS TEXT), ImageUrl 
+                FROM Textbooks;
+                
+                DROP TABLE Textbooks;
+                
+                ALTER TABLE Textbooks_temp RENAME TO Textbooks;
             ";
-            cmd.ExecuteNonQuery();
+                    alterCmd.ExecuteNonQuery();
+                    Console.WriteLine("Таблица Textbooks успешно обновлена (Class -> TEXT)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении таблицы Textbooks: {ex.Message}");
+            }
+
+            // Миграция для добавления поля SolutionText в таблицу Tasks
+            try
+            {
+                var checkSolutionCmd = conn.CreateCommand();
+                checkSolutionCmd.CommandText = "PRAGMA table_info(Tasks);";
+                using var reader = checkSolutionCmd.ExecuteReader();
+                bool hasSolutionText = false;
+
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == "SolutionText")
+                    {
+                        hasSolutionText = true;
+                        break;
+                    }
+                }
+                reader.Close();
+
+                if (!hasSolutionText)
+                {
+                    var alterCmd = conn.CreateCommand();
+                    alterCmd.CommandText = "ALTER TABLE Tasks ADD COLUMN SolutionText TEXT DEFAULT '';";
+                    alterCmd.ExecuteNonQuery();
+                    Console.WriteLine("Добавлено поле SolutionText в таблицу Tasks");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при добавлении поля SolutionText: {ex.Message}");
+            }
 
             // если файл только что создан — добавим default admin
             if (create)
@@ -132,7 +215,7 @@ namespace GdzApp.Data
                     Country = rdr.IsDBNull(4) ? "" : rdr.GetString(4),
                     Authors = rdr.IsDBNull(5) ? "" : rdr.GetString(5),
                     Year = rdr.IsDBNull(6) ? 0 : rdr.GetInt32(6),
-                    Class = rdr.IsDBNull(7) ? 0 : rdr.GetInt32(7),
+                    Class = rdr.IsDBNull(7) ? "" : rdr.GetString(7),
                     ImageUrl = rdr.IsDBNull(8) ? "" : rdr.GetString(8)
                 });
             }

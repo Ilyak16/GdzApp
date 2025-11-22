@@ -27,14 +27,14 @@ namespace GdzApp.Pages
         private void Search_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             var q = SearchBox.Text.Trim().ToLower();
-            int cls = 0;
-            int.TryParse(ClassFilterBox.Text.Trim(), out cls);
+            var classFilter = ClassFilterBox.Text.Trim();
 
             var filtered = _allBooks.Where(b =>
                 (string.IsNullOrEmpty(q) ||
                  b.Subject.ToLower().Contains(q) ||
                  b.Authors.ToLower().Contains(q))
-                && (cls == 0 || b.Class == cls)
+                && (string.IsNullOrEmpty(classFilter) ||
+                    b.Class.Contains(classFilter))
             ).ToList();
 
             BooksPanel.ItemsSource = filtered;
@@ -45,6 +45,13 @@ namespace GdzApp.Pages
             SearchBox.Text = "";
             ClassFilterBox.Text = "";
             BooksPanel.ItemsSource = _allBooks;
+        }
+        private void ViewTasks_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Textbook textbook)
+            {
+                NavigationService?.Navigate(new TaskViewPage(_main, textbook));
+            }
         }
     }
 }

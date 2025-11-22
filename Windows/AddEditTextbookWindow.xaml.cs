@@ -36,8 +36,8 @@ namespace GdzApp.Windows
             TheTextbook.Description = DescriptionBox.Text.Trim();
             TheTextbook.Manufacturer = ManufacturerBox.Text.Trim();
             TheTextbook.Country = CountryBox.Text.Trim();
+            TheTextbook.Class = ClassBox.Text.Trim();
             if (int.TryParse(YearBox.Text.Trim(), out int y)) TheTextbook.Year = y;
-            if (int.TryParse(ClassBox.Text.Trim(), out int cls)) TheTextbook.Class = cls;
             TheTextbook.ImageUrl = ImageUrlBox.Text.Trim();
 
             if (string.IsNullOrEmpty(TheTextbook.Subject))
