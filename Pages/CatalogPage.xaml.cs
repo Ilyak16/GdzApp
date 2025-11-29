@@ -50,7 +50,7 @@ namespace GdzApp.Pages
         {
             if (sender is Button button && button.Tag is Textbook textbook)
             {
-                NavigationService?.Navigate(new TaskViewPage(_main, textbook));
+                NavigationService?.Navigate(new TasksGridPage(_main, textbook));
             }
         }
     }

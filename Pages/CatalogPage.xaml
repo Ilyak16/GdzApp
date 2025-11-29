@@ -24,7 +24,9 @@
                                     <ColumnDefinition Width="150"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Image Width="140" Height="180" Source="{Binding ImageUrl, Converter={StaticResource ImageUrlConverter}}" Grid.Column="0"/>
+                                <Image Width="140" Height="180" 
+                                Source="{Binding ImageUrl, Converter={StaticResource ImageUrlConverter}}"
+                                Stretch="Uniform"/>
                                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                                     <TextBlock Text="{Binding Subject}" FontSize="16" FontWeight="Bold"/>
                                     <TextBlock Text="{Binding Authors}" FontStyle="Italic" Margin="0,4,0,0"/>

@@ -13,7 +13,7 @@ namespace GdzApp.Converters
         {
             _placeholder = new BitmapImage();
             _placeholder.BeginInit();
-            _placeholder.UriSource = new Uri("https://via.placeholder.com/140x180?text=No+Image");
+            _placeholder.UriSource = new Uri("https://via.placeholder.com/400x300/2EA8E6/FFFFFF?text=No+Image");
             _placeholder.EndInit();
         }
 
@@ -23,10 +23,18 @@ namespace GdzApp.Converters
             {
                 var s = value as string;
                 if (string.IsNullOrEmpty(s)) return _placeholder;
+
                 var bmp = new BitmapImage();
                 bmp.BeginInit();
                 bmp.UriSource = new Uri(s, UriKind.Absolute);
-                bmp.DecodePixelWidth = 140;
+
+                // УБИРАЕМ принудительное изменение размера
+                // bmp.DecodePixelWidth = 140; // УДАЛИТЬ ЭТУ СТРОКУ!
+
+                // Вместо этого настраиваем кэширование
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+
                 bmp.EndInit();
                 return bmp;
             }
