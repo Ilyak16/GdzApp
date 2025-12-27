@@ -27,11 +27,6 @@ namespace GdzApp.Converters
                 var bmp = new BitmapImage();
                 bmp.BeginInit();
                 bmp.UriSource = new Uri(s, UriKind.Absolute);
-
-                // УБИРАЕМ принудительное изменение размера
-                // bmp.DecodePixelWidth = 140; // УДАЛИТЬ ЭТУ СТРОКУ!
-
-                // Вместо этого настраиваем кэширование
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
 

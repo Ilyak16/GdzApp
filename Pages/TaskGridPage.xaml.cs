@@ -38,7 +38,6 @@ namespace GdzApp.Pages
 
         public void OpenTaskSolution(TaskItem task)
         {
-            // Переходим на страницу с решением этого задания
             NavigationService?.Navigate(new TaskSolutionPage(_main, task));
         }
 
@@ -47,8 +46,6 @@ namespace GdzApp.Pages
             NavigationService?.GoBack();
         }
     }
-
-    // ViewModel для задания с поддержкой команд
     public class TaskViewModel
     {
         private TaskItem _task;
@@ -69,8 +66,6 @@ namespace GdzApp.Pages
             _page.OpenTaskSolution(_task);
         }
     }
-
-    // Простая реализация команды
     public class RelayCommand : ICommand
     {
         private Action _execute;

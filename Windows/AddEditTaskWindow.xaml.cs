@@ -26,12 +26,9 @@ namespace GdzApp.Windows
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            // Сохраняем ВСЕ поля
             TheTask.Title = TitleBox.Text.Trim();
             TheTask.SolutionImageUrl = ImageBox.Text.Trim();
             TheTask.SolutionText = TextSolutionBox.Text.Trim();
-
-            // Отладочный вывод
             System.Diagnostics.Debug.WriteLine($"=== СОХРАНЕНИЕ ЗАДАНИЯ ===");
             System.Diagnostics.Debug.WriteLine($"Заголовок: '{TheTask.Title}'");
             System.Diagnostics.Debug.WriteLine($"Изображение: '{TheTask.SolutionImageUrl}'");
